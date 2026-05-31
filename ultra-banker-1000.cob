@@ -12,8 +12,13 @@ FILE-CONTROL.
     
 	SELECT TRANS-FILE ASSIGN TO "transactions.txt"
         ORGANIZATION IS LINE SEQUENTIAL.
+        
+
 
 DATA DIVISION.
+
+
+
 FILE SECTION.
 FD  INTRO-TEXT-FILE.
 01  FILE-RECORD.
@@ -37,17 +42,26 @@ WORKING-STORAGE SECTION.
 01  BALANCE-GET-ACC           PIC X(8).
 01  BALANCE-GET-BAL           PIC S9(7)V99 VALUE 0.
 
+01  COMMAND-INPUT    PIC X(20) VALUE SPACES.
+
 
 
 PROCEDURE DIVISION.
 MAIN-LOGIC.
     *> DISPLAY "Hello, world!".
     *> PERFORM SAY-HELLO.
-    
+    CALL "SYSTEM" USING "clear".
     *> This will now execute your intro-reading paragraph
     PERFORM DISPLAY-INTRO.
     
     *> PERFORM DISPLAY-TRANSACTIONS.
+    
+    DISPLAY ">  " WITH NO ADVANCING.
+    ACCEPT COMMAND-INPUT.
+    
+    *> DISPLAY COMMAND-INPUT.
+    
+    PERFORM RUN-COMMAND.
     
     *> 1. Supply the INPUT variable
     MOVE "99887766" TO BALANCE-GET-ACC.
@@ -61,8 +75,16 @@ MAIN-LOGIC.
     DISPLAY "=======================================".
     
     STOP RUN.
+
+RUN-COMMAND.
+	*> DISPLAY "RUNNING COMMAND"
+	IF COMMAND-INPUT = "HELP"
+		DISPLAY "ULTRA-BANKER-1000 V0.0.1"
+		DISPLAY "COMMANDS:"
+		DISPLAY "	HELP: Display this message"
+	END-IF.
     
-    STOP RUN.
+
 
 *> INPUTS:
 *>	BALANCE-GET-ACC
