@@ -9,10 +9,10 @@ INPUT-OUTPUT SECTION.
 FILE-CONTROL.
     SELECT INTRO-TEXT-FILE ASSIGN TO "intro.txt"
         ORGANIZATION IS LINE SEQUENTIAL.
-    
+
 	SELECT TRANS-FILE ASSIGN TO "transactions.txt"
         ORGANIZATION IS LINE SEQUENTIAL.
-        
+
 
 
 DATA DIVISION.
@@ -53,28 +53,36 @@ MAIN-LOGIC.
     CALL "SYSTEM" USING "clear".
     *> This will now execute your intro-reading paragraph
     PERFORM DISPLAY-INTRO.
-    
+
     *> PERFORM DISPLAY-TRANSACTIONS.
-    
-    DISPLAY ">  " WITH NO ADVANCING.
-    ACCEPT COMMAND-INPUT.
-    
-    *> DISPLAY COMMAND-INPUT.
-    
-    PERFORM RUN-COMMAND.
-    
+
+    GO TO COMMAND-LOOP.
+
     *> 1. Supply the INPUT variable
     MOVE "99887766" TO BALANCE-GET-ACC.
-    
+
     *> 2. Call the paragraph
     PERFORM GET-ACCOUNT-BALANCE.
-    
+
     *> 3. Use the OUTPUT variable
     DISPLAY "=======================================".
     DISPLAY "Final Balance for Account " BALANCE-GET-ACC ": $" BALANCE-GET-BAL.
     DISPLAY "=======================================".
-    
+
     STOP RUN.
+
+COMMAND-LOOP.
+
+    DISPLAY ">  " WITH NO ADVANCING.
+    ACCEPT COMMAND-INPUT.
+
+    *> DISPLAY COMMAND-INPUT.
+
+    PERFORM RUN-COMMAND.
+
+    GO TO COMMAND-LOOP.
+
+
 
 RUN-COMMAND.
 	*> DISPLAY "RUNNING COMMAND"
@@ -82,8 +90,30 @@ RUN-COMMAND.
 		DISPLAY "ULTRA-BANKER-1000 V0.0.1"
 		DISPLAY "COMMANDS:"
 		DISPLAY "	HELP: Display this message"
+		EXIT PARAGRAPH
 	END-IF.
-    
+
+    IF COMMAND-INPUT = "LIST"
+		DISPLAY "DISPLAYING TRANSACTION LIST"
+		PERFORM DISPLAY-TRANSACTIONS
+		EXIT PARAGRAPH
+	END-IF.
+
+    IF COMMAND-INPUT = "BALANCE"
+        DISPLAY "ENTER ACCOUNT NUMBER>  " WITH NO ADVANCING
+        ACCEPT BALANCE-GET-ACC
+        PERFORM GET-ACCOUNT-BALANCE
+        DISPLAY "ACCOUNT NUMBER " BALANCE-GET-ACC " HAS: $" BALANCE-GET-BAL
+		EXIT PARAGRAPH
+	END-IF.
+
+    IF COMMAND-INPUT = "EXIT"
+		DISPLAY "Goodbye"
+		STOP RUN
+	END-IF.
+
+	DISPLAY "INVALID COMMAND".
+
 
 
 *> INPUTS:
@@ -91,55 +121,55 @@ RUN-COMMAND.
 *> OUTPUTS:
 *>  BALANCE-GET-BAL
 GET-ACCOUNT-BALANCE.
-	
+
 	MOVE "N" TO WS-EOF-TRANS.
     MOVE 0 TO BALANCE-GET-BAL.
-    
-    
+
+
     OPEN INPUT TRANS-FILE.
-    
+
     PERFORM READ-NEXT.
-    
+
     PERFORM UNTIL WS-EOF-TRANS = "Y"
         *> DISPLAY "--- Transaction Processed ---"
         *> DISPLAY "Source Account:      " TR-SRC-ACC
         *> DISPLAY "Destination Account: " TR-DST-ACC
         *> DISPLAY "Amount transferred:  $" TR-AMOUNT
         *> DISPLAY " "
-        
-        
+
+
         IF TR-SRC-ACC = BALANCE-GET-ACC
 		     COMPUTE BALANCE-GET-BAL =  BALANCE-GET-BAL - FUNCTION NUMVAL(TR-AMOUNT)
 		     *> DISPLAY "FOUND ACCOUNT"
 		     *> DISPLAY "YAY"
 		END-IF
-		
+
 		IF TR-DST-ACC = BALANCE-GET-ACC
 		     COMPUTE BALANCE-GET-BAL =  BALANCE-GET-BAL + FUNCTION NUMVAL(TR-AMOUNT)
 		     *> DISPLAY "FOUND ACCOUNT"
 		     *> DISPLAY "YAY"
 		END-IF
-        
+
         PERFORM READ-NEXT
     END-PERFORM.
-    
-    CLOSE TRANS-FILE.    
+
+    CLOSE TRANS-FILE.
 
 DISPLAY-TRANSACTIONS.
     OPEN INPUT TRANS-FILE.
-    
+
     PERFORM READ-NEXT.
-    
+
     PERFORM UNTIL WS-EOF-TRANS = "Y"
         DISPLAY "--- Transaction Processed ---"
         DISPLAY "Source Account:      " TR-SRC-ACC
         DISPLAY "Destination Account: " TR-DST-ACC
         DISPLAY "Amount transferred:  $" TR-AMOUNT
         DISPLAY " "
-        
+
         PERFORM READ-NEXT
     END-PERFORM.
-    
+
     CLOSE TRANS-FILE.
     *> STOP RUN.
 
@@ -147,7 +177,7 @@ READ-NEXT.
     READ TRANS-FILE
         AT END MOVE "Y" TO WS-EOF-TRANS
     END-READ.
-    
+
 *> This is your "function"
 SAY-HELLO.
     DISPLAY "Hello from inside a paragraph!".
