@@ -34,6 +34,8 @@ WORKING-STORAGE SECTION.
 01  WS-EOF-INTRO              PIC X(1) VALUE "N".
 01  WS-EOF-TRANS              PIC X(1) VALUE "N".
 
+01  BALANCE-GET-ACC           PIC X(8).
+01  BALANCE-GET-BAL           PIC S9(7)V99 VALUE 0.
 
 
 
@@ -45,10 +47,61 @@ MAIN-LOGIC.
     *> This will now execute your intro-reading paragraph
     PERFORM DISPLAY-INTRO.
     
-    PERFORM DISPLAY-TRANSACTIONS
+    *> PERFORM DISPLAY-TRANSACTIONS.
+    
+    *> 1. Supply the INPUT variable
+    MOVE "99887766" TO BALANCE-GET-ACC.
+    
+    *> 2. Call the paragraph
+    PERFORM GET-ACCOUNT-BALANCE.
+    
+    *> 3. Use the OUTPUT variable
+    DISPLAY "=======================================".
+    DISPLAY "Final Balance for Account " BALANCE-GET-ACC ": $" BALANCE-GET-BAL.
+    DISPLAY "=======================================".
     
     STOP RUN.
     
+    STOP RUN.
+
+*> INPUTS:
+*>	BALANCE-GET-ACC
+*> OUTPUTS:
+*>  BALANCE-GET-BAL
+GET-ACCOUNT-BALANCE.
+	
+	MOVE "N" TO WS-EOF-TRANS.
+    MOVE 0 TO BALANCE-GET-BAL.
+    
+    
+    OPEN INPUT TRANS-FILE.
+    
+    PERFORM READ-NEXT.
+    
+    PERFORM UNTIL WS-EOF-TRANS = "Y"
+        *> DISPLAY "--- Transaction Processed ---"
+        *> DISPLAY "Source Account:      " TR-SRC-ACC
+        *> DISPLAY "Destination Account: " TR-DST-ACC
+        *> DISPLAY "Amount transferred:  $" TR-AMOUNT
+        *> DISPLAY " "
+        
+        
+        IF TR-SRC-ACC = BALANCE-GET-ACC
+		     COMPUTE BALANCE-GET-BAL =  BALANCE-GET-BAL - FUNCTION NUMVAL(TR-AMOUNT)
+		     *> DISPLAY "FOUND ACCOUNT"
+		     *> DISPLAY "YAY"
+		END-IF
+		
+		IF TR-DST-ACC = BALANCE-GET-ACC
+		     COMPUTE BALANCE-GET-BAL =  BALANCE-GET-BAL + FUNCTION NUMVAL(TR-AMOUNT)
+		     *> DISPLAY "FOUND ACCOUNT"
+		     *> DISPLAY "YAY"
+		END-IF
+        
+        PERFORM READ-NEXT
+    END-PERFORM.
+    
+    CLOSE TRANS-FILE.    
 
 DISPLAY-TRANSACTIONS.
     OPEN INPUT TRANS-FILE.
@@ -66,7 +119,7 @@ DISPLAY-TRANSACTIONS.
     END-PERFORM.
     
     CLOSE TRANS-FILE.
-    STOP RUN.
+    *> STOP RUN.
 
 READ-NEXT.
     READ TRANS-FILE
@@ -77,6 +130,9 @@ READ-NEXT.
 SAY-HELLO.
     DISPLAY "Hello from inside a paragraph!".
     *> Logic flows back to the main logic automatically at the end of the paragraph.
+
+
+
 
 DISPLAY-INTRO.
     OPEN INPUT INTRO-TEXT-FILE
